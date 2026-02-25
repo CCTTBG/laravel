@@ -8,7 +8,7 @@
 <h1>게시판 목록</h1>
 <div>
 @if(auth()->check())
-    <p>{{ auth()->user()->name }} 님 로그인중</p>
+    <p>{{ auth()->user()->name }} 님 로그인중 {{auth()->user()->rank->name}} </p>
     <form method="POST" action="{{ route('simple.logout') }}">
         @csrf
         <button type="submit">로그아웃</button>
@@ -64,7 +64,7 @@
         </tbody>
     </table>
 @endif
-
+@if(auth()->check())
 <div class="popUp" id="postPopup">
     <form id="postForm" method="POST">
         @csrf
@@ -91,6 +91,8 @@
         <button type="button" id="closePopup">닫기</button>
     </form>
 </div>
+@endif
+
 </body>
 
 <script>
