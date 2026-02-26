@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Post;
 use Illuminate\Http\Request;
+use App\Models\Group;
+
 
 class PostController extends Controller
 {
@@ -12,11 +14,30 @@ class PostController extends Controller
      */
     public function index()
     {
-        //기본 조회 페이지
-        $posts=Post::orderBy('created_at')->get();
-        return view('posts.index',compact('posts'));
-    }
+        $groups = Group::all();
+        $query = Post::with('groups');
 
+        if (auth()->check()) {
+
+            $myGroupId = auth()->user()->group_id;
+
+            $query->where(function ($q) use ($myGroupId) {
+                $q->whereDoesntHave('groups') // 전체 공개
+                ->orWhereHas('groups', function ($q2) use ($myGroupId) {
+                    $q2->where('groups.id', $myGroupId);
+                });
+            });
+        } else {
+            $query->whereDoesntHave('groups');
+        }
+
+        $posts = $query
+            ->orderByDesc('is_notice')  // ✅ 공지 먼저
+            ->orderByDesc('created_at')
+            ->get();
+
+        return view('posts.index', compact('posts', 'groups'));
+    }
     /**
      * Show the form for creating a new resource.
      */
@@ -30,16 +51,22 @@ class PostController extends Controller
      */
     public function store(Request $request)
     {
-        //등록
-       $request->validate([
-            'comment'=>'required|max:500'
-       ]);
 
-       Post::create([
-           'name' => auth()->user()->name,
-           'email' => auth()->user()->email,
-           'comment' => $request->comment,
-       ]);
+        //등록
+        $request->validate([
+            'comment' => 'required|max:500',
+            'groups' => 'nullable|array',
+            'groups.*' => 'integer|exists:groups,id',
+        ]);
+
+        $post = Post::create([
+            'name' => auth()->user()->name,
+            'email' => auth()->user()->email,
+            'comment' => $request->comment,
+            'is_notice' => $request->boolean('is_notice'), // 공지 기능까지 하면 추가
+        ]);
+        $post->groups()->sync($request->input('groups', []));
+
         return redirect()->route('posts.index')
             ->with('success', '등록 완료!');
 

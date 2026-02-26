@@ -45,7 +45,12 @@
             <tr>
                 <td>{{ $post->id }}</td>
                 <td>{{ $post->name }}</td>
-                <td>{{ $post->comment }}</td>
+                <td>
+                    @if($post->is_notice)
+                        <strong style="color:red;">[공지]</strong>
+                    @endif
+                    {{ $post->comment }}
+                </td>
                 <td>{{ $post->created_at }}</td>
                 <td><a href="#"
                        class="openEdit"
@@ -68,8 +73,12 @@
 <div class="popUp" id="postPopup">
     <form id="postForm" method="POST">
         @csrf
-
-        {{-- 수정일 때만 사용 --}}
+        <div style="margin-top:10px;">
+            <label>
+                <input type="checkbox" name="is_notice" value="1">
+                공지로 등록
+            </label>
+        </div>
         <input type="hidden" name="_method" id="methodSpoof" value="PUT" disabled>
 
         <table>
@@ -87,6 +96,15 @@
             </tbody>
         </table>
 
+        <div style="margin-top:10px;">
+            <p>노출 그룹 선택(복수 가능)</p>
+            @foreach($groups as $group)
+                <label style="display:inline-block; margin-right:10px;">
+                    <input type="checkbox" name="groups[]" value="{{ $group->id }}">
+                    {{ $group->name }}
+                </label>
+            @endforeach
+        </div>
         <button type="submit" id="submitBtn">등록</button>
         <button type="button" id="closePopup">닫기</button>
     </form>

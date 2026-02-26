@@ -10,5 +10,8 @@ class Group extends Model
     {
         return $this->hasMany(User::class);
     }
-
+    public function posts()
+    {
+        return $this->belongsToMany(Post::class);
+    }
 }
